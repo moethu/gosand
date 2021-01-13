@@ -8,14 +8,14 @@ using System.Drawing;
 using System.Net;
 using System.IO;
 
-namespace gonect
+namespace gosand
 {
     /// <summary>
-    /// Get Mesh Component for Gonect
+    /// Get Mesh Component for Gosand
     /// </summary>
-    public class GonectGetMesh : GH_Component
+    public class GosandGetMesh : GH_Component
     {
-        public GonectGetMesh() : base("Get Gonect Mesh", "GetMesh", "Loads a Mesh from a Gonect source", "Gonect", "Device") { }
+        public GosandGetMesh() : base("Get Gosand Mesh", "GetMesh", "Loads a Mesh from a Gosand source", "Gosand", "Device") { }
 
         /// <summary>
         /// Register Input Ports
@@ -23,7 +23,7 @@ namespace gonect
         /// <param name="pManager"></param>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("Url", "U", "Url to Gonect webserver. The url should only contain protocol, hostname and port like: http://localhost:4777 - also supports websocket connections for example: ws://localhost:4777", GH_ParamAccess.item);
+            pManager.AddTextParameter("Url", "U", "Url to Gosand webserver. The url should only contain protocol, hostname and port like: http://localhost:4777 - also supports websocket connections for example: ws://localhost:4777", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Freq", "f", "[Optional, Default 300] Receiving frequency in ms. This forces the canvas to resolve.", GH_ParamAccess.item);
             pManager.AddColourParameter("Color Palette", "C", "[Optional, Default Black] Depth Color Palette must contain 255 Colors to cover the full depth palette.", GH_ParamAccess.list);
             pManager.AddNumberParameter("X Scale", "x", "[Optional, Default 1.0] Scale for X dimension", GH_ParamAccess.item);
@@ -48,9 +48,9 @@ namespace gonect
         }
 
         /// <summary>
-        /// Get Bytes from Gonect Server
+        /// Get Bytes from Gosand Server
         /// </summary>
-        /// <param name="uri">Gonect server url</param>
+        /// <param name="uri">Gosand server url</param>
         /// <returns>Response in bytes</returns>
         public byte[] GetBytes(string uri)
         {
@@ -106,7 +106,7 @@ namespace gonect
             if (!DA.GetData<GH_Rectangle>(6, ref crect)) { crect = null; }
             
             //
-            // Connect to gonect sever either using a websocket or by simple GET requests
+            // Connect to Gosand sever either using a websocket or by simple GET requests
             //
             if (!path.Value.ToLower().StartsWith("ws"))
             {
@@ -290,7 +290,7 @@ namespace gonect
             }
         }
 
-        protected override Bitmap Icon => gonect.Properties.Resources.kinect;
+        protected override Bitmap Icon => gosand.Properties.Resources.kinect;
     }
 
 }

@@ -7,8 +7,8 @@
     <ProjectGuid>{B484A4E3-5110-4430-8723-9D557D8B07C3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>gonect</RootNamespace>
-    <AssemblyName>gonect</AssemblyName>
+    <RootNamespace>gosand</RootNamespace>
+    <AssemblyName>gosand</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

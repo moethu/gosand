@@ -20,7 +20,7 @@ var doc = `{
         "title": "{{.Title}}",
         "contact": {
             "name": "API Support",
-            "url": "http://github.com/moethu/gonect"
+            "url": "http://github.com/moethu/gosand"
         },
         "version": "{{.Version}}"
     },
@@ -139,7 +139,7 @@ var SwaggerInfo = swaggerInfo{
 	Host:        "",
 	BasePath:    "",
 	Schemes:     []string{},
-	Title:       "Gonect Server API",
+	Title:       "Gosand Server API",
 	Description: "This API provides access to a connected MS Kinect Camera.",
 }
 
