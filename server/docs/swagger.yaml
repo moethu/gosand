@@ -1,0 +1,71 @@
+info:
+  contact:
+    name: API Support
+    url: http://github.com/moethu/gonect
+  description: This API provides access to a connected MS Kinect Camera.
+  title: Gonect Server API
+  version: "0.5"
+paths:
+  /deptharray/:
+    get:
+      consumes:
+      - application/json
+      description: gets the current frames depth array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: integer
+            type: array
+      summary: Get Depth Array
+  /frame/{type}/:
+    get:
+      consumes:
+      - application/json
+      description: gets the current frame
+      parameters:
+      - description: Frame Type depth, ir or rgb
+        in: path
+        name: type
+        required: true
+        type: string
+      produces:
+      - image/jpeg
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: byte
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Get Frame from Kinect
+  /stream/{type}/{time}/:
+    get:
+      consumes:
+      - application/json
+      description: Serves frames continuously
+      parameters:
+      - description: Frame Type deptharray, depthframe, irframe, rgbframe
+        in: path
+        name: type
+        required: true
+        type: string
+      - description: Image sending frequency in ms
+        in: path
+        name: time
+        required: true
+        type: integer
+      produces:
+      - image/jpeg
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: byte
+      summary: Serves a websocket streaming kinect frames
+swagger: "2.0"

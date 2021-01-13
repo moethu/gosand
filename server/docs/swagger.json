@@ -1,0 +1,108 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This API provides access to a connected MS Kinect Camera.",
+        "title": "Gonect Server API",
+        "contact": {
+            "name": "API Support",
+            "url": "http://github.com/moethu/gonect"
+        },
+        "version": "0.5"
+    },
+    "paths": {
+        "/deptharray/": {
+            "get": {
+                "description": "gets the current frames depth array",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get Depth Array",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/frame/{type}/": {
+            "get": {
+                "description": "gets the current frame",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "image/jpeg"
+                ],
+                "summary": "Get Frame from Kinect",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Frame Type depth, ir or rgb",
+                        "name": "type",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "byte"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/stream/{type}/{time}/": {
+            "get": {
+                "description": "Serves frames continuously",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "image/jpeg"
+                ],
+                "summary": "Serves a websocket streaming kinect frames",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Frame Type deptharray, depthframe, irframe, rgbframe",
+                        "name": "type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Image sending frequency in ms",
+                        "name": "time",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "byte"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
