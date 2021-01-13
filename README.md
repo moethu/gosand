@@ -1,7 +1,7 @@
 
 ![](https://raw.githubusercontent.com/moethu/gosand/main/images/logo.png)
 
-![](https://raw.githubusercontent.com/moethu/gosand/main/images/image.png)
+![](https://raw.githubusercontent.com/moethu/gosand/main/images/concept.png)
 
 Gosand is a simple webserver serving a Kinects data using gonect - a Go wrapper for the [libfreenect](https://github.com/OpenKinect/libfreenect) library. Why? I started building a magical sandbox - which is basically a box full of sand and a depth camera scanning its topography. So I could see changes on the physical model within milliseconds in a 3D model in Rhino where it can be analyzed instantly. For this I needed to get depth frames from the Kinect Camera into Rhino 3D running on a Windows. That's easy if you are a bare metal Windows user but not if you are running Windows on a VM on a Linux Host. So I decided to simply use a raspberrypi to serve the Kinects Data via HTTP. So in the end you can connect the Kinect to a raspberry-pi and stream its data through a websocket to any 3D application running on any platform.
 
