@@ -1,8 +1,9 @@
-# gonect server
 
-![](https://raw.githubusercontent.com/moethu/gonect/master/image.png)
+![](https://raw.githubusercontent.com/moethu/gosand/main/images/logo.png)
 
-Gonect server is a simple webserver serving a Kinects data using gonect - a Go wrapper for the [libfreenect](https://github.com/OpenKinect/libfreenect) library. Why? I started building a magical sandbox - which is basically a box full of sand and a depth camera scanning its topography. So I could see changes on the physical model within milliseconds in a 3D model in Rhino where it can be analyzed instantly. For this I needed to get depth frames from the Kinect Camera into Rhino 3D running on a Windows. That's easy if you are a bare metal Windows user but not if you are running Windows on a VM on a Linux Host. So I decided to simply use a raspberrypi to serve the Kinects Data via HTTP. So in the end you can connect the Kinect to a raspberry-pi and stream its data through a websocket to any 3D application running on any platform.
+![](https://raw.githubusercontent.com/moethu/gosand/main/images/image.png)
+
+Gosand is a simple webserver serving a Kinects data using gonect - a Go wrapper for the [libfreenect](https://github.com/OpenKinect/libfreenect) library. Why? I started building a magical sandbox - which is basically a box full of sand and a depth camera scanning its topography. So I could see changes on the physical model within milliseconds in a 3D model in Rhino where it can be analyzed instantly. For this I needed to get depth frames from the Kinect Camera into Rhino 3D running on a Windows. That's easy if you are a bare metal Windows user but not if you are running Windows on a VM on a Linux Host. So I decided to simply use a raspberrypi to serve the Kinects Data via HTTP. So in the end you can connect the Kinect to a raspberry-pi and stream its data through a websocket to any 3D application running on any platform.
 
 - Server: Go HTTP Server running on Linux
 - Client: C#.NET Component for Rhino/Grasshopper
@@ -17,7 +18,7 @@ Note: I used a Raspi 3 Model B+, just make sure you are using a proper power sup
 Once the server is running you can simply test it by opening root: http://localhost:4777/
 which renders a webGL scene showing the pointcloud of what the camera currently sees
 
-![](https://raw.githubusercontent.com/moethu/gonect/master/home.png)
+![](https://raw.githubusercontent.com/moethu/gosand/main/images/home.png)
 
 ### Building freenect yourself
 
@@ -55,7 +56,7 @@ sudo make install
 
 ## Clients
 
-![](https://raw.githubusercontent.com/moethu/gonect/master/example.png)
+![](https://raw.githubusercontent.com/moethu/gosand/main/images/example.png)
 
 Currently there is only one client available: A Grasshopper 3D Component for McNeel's Rhino 3D. A Windows build of this component can be downloaded in "releases". Or you build it yourself using Visual Studio. All dependencies will be installed via nuget, except for Rhino and Grasshopper of course. The Component allows you to either stream depth frames into Grasshopper (for high frequency updates) or GET depth frame data via HTTP requests (recommended for low frequency updates). The component will instantly provide a 3D Mesh of the depth frame. 
 
