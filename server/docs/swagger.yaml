@@ -1,9 +1,9 @@
 info:
   contact:
     name: API Support
-    url: http://github.com/moethu/gonect
+    url: http://github.com/moethu/gosand
   description: This API provides access to a connected MS Kinect Camera.
-  title: Gonect Server API
+  title: Gosand Server API
   version: "0.5"
 paths:
   /deptharray/:

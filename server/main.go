@@ -15,11 +15,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/moethu/gonect/server/freenect"
+	"github.com/moethu/gosand/server/freenect"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	_ "github.com/moethu/gonect/server/docs"
+	_ "github.com/moethu/gosand/server/docs"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -29,12 +29,12 @@ var led_sleep_time time.Duration
 var image_quality = 100
 var freenect_device_present = false
 
-// @title Gonect Server API
+// @title Gosand Server API
 // @version 0.5
 // @description This API provides access to a connected MS Kinect Camera.
 
 // @contact.name API Support
-// @contact.url http://github.com/moethu/gonect
+// @contact.url http://github.com/moethu/gosand
 func main() {
 	flag.Parse()
 	log.SetFlags(0)

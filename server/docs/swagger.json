@@ -2,7 +2,7 @@
     "swagger": "2.0",
     "info": {
         "description": "This API provides access to a connected MS Kinect Camera.",
-        "title": "Gonect Server API",
+        "title": "Gosand Server API",
         "contact": {
             "name": "API Support",
             "url": "http://github.com/moethu/gonect"

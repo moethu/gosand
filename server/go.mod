@@ -1,4 +1,4 @@
-module github.com/moethu/gonect/server
+module github.com/moethu/gosand/server
 
 go 1.13
 
