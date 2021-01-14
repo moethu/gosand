@@ -1,5 +1,5 @@
 
-![](https://raw.githubusercontent.com/moethu/gosand/main/images/logo.png)
+<img src="https://raw.githubusercontent.com/moethu/gosand/main/images/logo.png" height="50">
 
 Gosand is a simple webserver serving a Kinects data using gonect - a Go wrapper for the [libfreenect](https://github.com/OpenKinect/libfreenect) library.
 
