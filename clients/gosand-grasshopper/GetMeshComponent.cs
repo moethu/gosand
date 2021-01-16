@@ -153,7 +153,7 @@ namespace gosand
                     {
                         var task_result = computingTask.Result;
                         result = task_result;
-                        if (task_result != null)
+                        if (task_result.Item1 != null)
                         {
                             previousResult = task_result;
                         }
@@ -161,8 +161,9 @@ namespace gosand
                     }
                     else if (r.Status == TaskStatus.Faulted)
                     {
-                        result = null;
+                        result = new Tuple<GH_Mesh, Curve[]>(null,null);
                         taskInProcess = false;
+                        ShowComponentError("Could not connect to Server");
                     }
                 },
                 TaskScheduler.FromCurrentSynchronizationContext());
