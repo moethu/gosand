@@ -31,12 +31,14 @@ namespace gosand
             pManager.AddNumberParameter("Y Scale", "y", "[Optional, Default 1.0] Scale for Y dimension", GH_ParamAccess.item);
             pManager.AddNumberParameter("Z Scale", "d", "[Optional, Default 1.0] Scale for Z dimension", GH_ParamAccess.item);
             pManager.AddRectangleParameter("Cropping Frame", "cf", "[Optional, Default None] Cropping Rectangle.", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Contour Distance", "cd", "[Optional, Default 0.0] Contour curve distance for spacing", GH_ParamAccess.item);
             pManager[1].Optional = true;
             pManager[2].Optional = true;
             pManager[3].Optional = true;
             pManager[4].Optional = true;
             pManager[5].Optional = true;
             pManager[6].Optional = true;
+            pManager[7].Optional = true;
         }
 
         /// <summary>
@@ -46,6 +48,7 @@ namespace gosand
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddMeshParameter("Mesh", "M", "Mesh", GH_ParamAccess.item);
+            pManager.AddCurveParameter("Contour Curves", "C", "Contour Curves", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -78,7 +81,7 @@ namespace gosand
         /// <summary>
         /// The actual output when processing data from Kinect
         /// </summary>
-        GH_Mesh result;
+        Tuple<GH_Mesh, Curve[]> result = new Tuple<GH_Mesh, Curve[]>(null,null);
 
         /// <summary>
         /// indicates if a background task is still in process
@@ -88,7 +91,7 @@ namespace gosand
         /// <summary>
         /// The previous processing result
         /// </summary>
-        GH_Mesh previousMesh;
+        Tuple<GH_Mesh, Curve[]> previousResult = new Tuple<GH_Mesh, Curve[]>(null, null);
 
         /// <summary>
         /// Byte Array buffer for websocket data
@@ -101,8 +104,9 @@ namespace gosand
         /// <param name="DA"></param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            if (result == null) result = previousMesh;
-            DA.SetData(0, result);
+            if (result.Item1 == null) result = previousResult;
+            DA.SetData(0, result.Item1);
+            DA.SetDataList(1, result.Item2);
 
             if (!taskInProcess)
             {
@@ -128,20 +132,22 @@ namespace gosand
                 DA.GetData<GH_Number>(5, ref dscale);
                 GH_Rectangle crect = new GH_Rectangle();
                 if (!DA.GetData<GH_Rectangle>(6, ref crect)) { crect = null; }
+                GH_Number distance = new GH_Number(0.0);
+                DA.GetData<GH_Number>(7, ref distance);
 
                 //
                 // Process retrieving data and meshing async
                 //
-                Task<GH_Mesh> computingTask = new Task<GH_Mesh>(() => makeMesh(path.Value, palette, xscale.Value, yscale.Value, dscale.Value, crect, frequency.Value));
+                Task<Tuple<GH_Mesh, Curve[]>> computingTask = new Task<Tuple<GH_Mesh, Curve[]>>(() => makeMesh(path.Value, palette, xscale.Value, yscale.Value, dscale.Value, crect, frequency.Value, distance.Value));
                 computingTask.ContinueWith(r =>
                 {
                     if (r.Status == TaskStatus.RanToCompletion)
                     {
-                        GH_Mesh task_result = computingTask.Result;
+                        var task_result = computingTask.Result;
                         result = task_result;
                         if (task_result != null)
-                        { 
-                            previousMesh = task_result;
+                        {
+                            previousResult = task_result;
                         }
                         taskInProcess = false;
                     }
@@ -159,7 +165,7 @@ namespace gosand
             ScheduleSolve();
         }
 
-        private GH_Mesh makeMesh(string path, List<GH_Colour> palette, double xscale, double yscale, double dscale, GH_Rectangle crect, int frequency)
+        private Tuple<GH_Mesh, Curve[]> makeMesh(string path, List<GH_Colour> palette, double xscale, double yscale, double dscale, GH_Rectangle crect, int frequency, double distance)
         {
             //
             // Connect to Gosand sever either using a websocket or by simple GET requests
@@ -171,8 +177,7 @@ namespace gosand
                 {
                     Color[] colors = null;
                     var pointaray = depthArrayToPointArray(data, palette, out colors, xscale, yscale, dscale);
-                    Mesh m = createMesh(pointaray, colors, crect);
-                    return new GH_Mesh(m);
+                    return createMesh(pointaray, colors, crect, dscale, distance);
                 }
             }
             else
@@ -193,12 +198,11 @@ namespace gosand
                     {
                         Color[] colors = null;
                         var pointaray = depthArrayToPointArray(buffer, palette, out colors, xscale, yscale, dscale);
-                        Mesh m = createMesh(pointaray, colors, crect);
-                        return new GH_Mesh(m);
+                        return createMesh(pointaray, colors, crect, dscale, distance);
                     }
                 }
             }
-            return null;
+            return new Tuple<GH_Mesh, Curve[]>(null,null);
         }
 
         /// <summary>
@@ -261,9 +265,9 @@ namespace gosand
         /// <param name="colors">color array (matching size to points)</param>
         /// <param name="rect">rectangle cropping the view</param>
         /// <returns>mesh</returns>
-        private Mesh createMesh(Point3f[] vertices, Color[] colors, GH_Rectangle rect)
+        private Tuple<GH_Mesh, Curve[]> createMesh(Point3f[] vertices, Color[] colors, GH_Rectangle rect, double dscale,  double distance)
         {
-            int xd = 640, yd = 480;
+            int xd = 640;
             Mesh mesh = new Mesh();
             mesh.Vertices.Capacity = vertices.Length;
             mesh.Vertices.UseDoublePrecisionVertices = false;
@@ -286,8 +290,16 @@ namespace gosand
                     mesh.Faces.AddFace(j - 1, j, i, i - 1);
                 }
             }
-            
-            return mesh;
+
+            Curve[] curves = null;
+            if (distance > 0.0)
+            {
+                Point3d p1 = new Point3d(0, 0, 0);
+                Point3d p2 = new Point3d(0, 0, 255 * dscale);
+                curves = Mesh.CreateContourCurves(mesh, p1, p2, distance);
+            }
+
+            return new Tuple<GH_Mesh, Curve[]>(new GH_Mesh(mesh), curves);
         }
 
         /// <summary>
