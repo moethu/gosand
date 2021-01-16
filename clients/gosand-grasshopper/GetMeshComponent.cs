@@ -7,6 +7,7 @@ using Rhino.Geometry;
 using System.Drawing;
 using System.Net;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace gosand
 {
@@ -16,7 +17,7 @@ namespace gosand
     public class GosandGetMesh : GH_Component
     {
         public GosandGetMesh() : base("Get Gosand Mesh", "GetMesh", "Loads a Mesh from a Gosand source", "Gosand", "Device") { }
-
+        
         /// <summary>
         /// Register Input Ports
         /// </summary>
@@ -56,7 +57,6 @@ namespace gosand
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
             request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-
             using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
             using (Stream stream = response.GetResponseStream())
             using (StreamReader reader = new StreamReader(stream))
@@ -66,14 +66,34 @@ namespace gosand
         }
 
         /// <summary>
-        /// Static to keep Websocket alive after refresh
+        /// keep Websocket alive after refresh
         /// </summary>
-        private static WebSocket websocket;
-
+        private WebSocket websocket;
+        
         /// <summary>
         /// Default refresh rate 300ms
         /// </summary>
         private int tickRate = 300;
+
+        /// <summary>
+        /// The actual output when processing data from Kinect
+        /// </summary>
+        GH_Mesh result;
+
+        /// <summary>
+        /// indicates if a background task is still in process
+        /// </summary>
+        bool taskInProcess;
+
+        /// <summary>
+        /// The previous processing result
+        /// </summary>
+        GH_Mesh previousMesh;
+
+        /// <summary>
+        /// Byte Array buffer for websocket data
+        /// </summary>
+        private byte[] buffer;
 
         /// <summary>
         /// Triggered when solving the instance
@@ -81,52 +101,87 @@ namespace gosand
         /// <param name="DA"></param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            //
-            // Get all input params
-            //
-            GH_String path = new GH_String();
-            DA.GetData<GH_String>(0, ref path);
-            GH_Integer frequency = new GH_Integer(300);
-            if (DA.GetData<GH_Integer>(1, ref frequency))
-            {
-                if (frequency.Value < 50 && frequency.Value > 0) { frequency.Value = 50; }
-                tickRate = frequency.Value;
-            }
-            List<GH_Colour> palette = new List<GH_Colour>();
-            DA.GetDataList<GH_Colour>(2, palette);
-            if (palette.Count < 255) palette = null;
+            if (result == null) result = previousMesh;
+            DA.SetData(0, result);
 
-            GH_Number xscale = new GH_Number(1.0);
-            DA.GetData<GH_Number>(3, ref xscale);
-            GH_Number yscale = new GH_Number(1.0);
-            DA.GetData<GH_Number>(4, ref yscale);
-            GH_Number dscale = new GH_Number(1.0);
-            DA.GetData<GH_Number>(5, ref dscale);
-            GH_Rectangle crect = new GH_Rectangle();
-            if (!DA.GetData<GH_Rectangle>(6, ref crect)) { crect = null; }
-            
+            if (!taskInProcess)
+            {
+                //
+                // Get all input params
+                //
+                GH_String path = new GH_String();
+                DA.GetData<GH_String>(0, ref path);
+                GH_Integer frequency = new GH_Integer(300);
+                if (DA.GetData<GH_Integer>(1, ref frequency))
+                {
+                    if (frequency.Value < 50 && frequency.Value > 0) { frequency.Value = 50; }
+                    tickRate = frequency.Value;
+                }
+                List<GH_Colour> palette = new List<GH_Colour>();
+                DA.GetDataList<GH_Colour>(2, palette);
+                if (palette.Count < 255) palette = null;
+                GH_Number xscale = new GH_Number(1.0);
+                DA.GetData<GH_Number>(3, ref xscale);
+                GH_Number yscale = new GH_Number(1.0);
+                DA.GetData<GH_Number>(4, ref yscale);
+                GH_Number dscale = new GH_Number(1.0);
+                DA.GetData<GH_Number>(5, ref dscale);
+                GH_Rectangle crect = new GH_Rectangle();
+                if (!DA.GetData<GH_Rectangle>(6, ref crect)) { crect = null; }
+
+                //
+                // Process retrieving data and meshing async
+                //
+                Task<GH_Mesh> computingTask = new Task<GH_Mesh>(() => makeMesh(path.Value, palette, xscale.Value, yscale.Value, dscale.Value, crect, frequency.Value));
+                computingTask.ContinueWith(r =>
+                {
+                    if (r.Status == TaskStatus.RanToCompletion)
+                    {
+                        GH_Mesh task_result = computingTask.Result;
+                        result = task_result;
+                        if (task_result != null)
+                        { 
+                            previousMesh = task_result;
+                        }
+                        taskInProcess = false;
+                    }
+                    else if (r.Status == TaskStatus.Faulted)
+                    {
+                        result = null;
+                        taskInProcess = false;
+                    }
+                },
+                TaskScheduler.FromCurrentSynchronizationContext());
+                computingTask.Start();
+                taskInProcess = true;
+            }
+
+            ScheduleSolve();
+        }
+
+        private GH_Mesh makeMesh(string path, List<GH_Colour> palette, double xscale, double yscale, double dscale, GH_Rectangle crect, int frequency)
+        {
             //
             // Connect to Gosand sever either using a websocket or by simple GET requests
             //
-            if (!path.Value.ToLower().StartsWith("ws"))
+            if (!path.ToLower().StartsWith("ws"))
             {
-                byte[] data = GetBytes(String.Format("{0}/deptharray/", path.Value));
-
+                byte[] data = GetBytes(String.Format("{0}/deptharray/", path));
                 if (data != null)
                 {
                     Color[] colors = null;
-                    var pointaray = depthArrayToPointArray(data, palette, out colors, xscale.Value, yscale.Value, dscale.Value);
+                    var pointaray = depthArrayToPointArray(data, palette, out colors, xscale, yscale, dscale);
                     Mesh m = createMesh(pointaray, colors, crect);
-                    DA.SetData(0, new GH_Mesh(m));
+                    return new GH_Mesh(m);
                 }
             }
-            else {
+            else
+            {
                 buffer = null;
-
                 if (websocket == null || websocket.State == WebSocketState.Closed)
                 {
-                    int server_refresh_rate = frequency.Value < 50? 50: frequency.Value;
-                    websocket = new WebSocket(String.Format("{0}/stream/deptharray/{1}/", path.Value, server_refresh_rate));
+                    int server_refresh_rate = frequency < 50 ? 50 : frequency;
+                    websocket = new WebSocket(String.Format("{0}/stream/deptharray/{1}/", path, server_refresh_rate));
                     websocket.EnableAutoSendPing = true;
                     websocket.MessageReceived += Websocket_MessageReceived;
                     websocket.Open();
@@ -137,20 +192,14 @@ namespace gosand
                     if (buffer != null)
                     {
                         Color[] colors = null;
-                        var pointaray = depthArrayToPointArray(buffer, palette, out colors, xscale.Value, yscale.Value, dscale.Value);
+                        var pointaray = depthArrayToPointArray(buffer, palette, out colors, xscale, yscale, dscale);
                         Mesh m = createMesh(pointaray, colors, crect);
-                        DA.SetData(0, new GH_Mesh(m));
-                        break;
+                        return new GH_Mesh(m);
                     }
                 }
             }
-            ScheduleSolve();
+            return null;
         }
-
-        /// <summary>
-        /// Byte Array buffer for websocket data
-        /// </summary>
-        private static byte[] buffer;
 
         /// <summary>
         /// Triggere when receiving websocket messages
@@ -176,25 +225,20 @@ namespace gosand
         private Point3f[] depthArrayToPointArray(byte[] deptharray, List<GH_Colour> palette, out Color[] colors, double xscale, double yscale, double dscale)
         {
             int depthPoint;
-
             var points = new Point3f[640 * 480];
             colors = new Color[640 * 480];
             var p = new Point3f();
             var i = 0;
             var buf = 0;
-
             for (var rows = 0; rows < 480; rows++)
-            { 
+            {
                 for (var columns = 0; columns < 640; columns++)
                 {
-
                     depthPoint = Convert.ToInt32(deptharray[i]);
-
                     if (depthPoint == 0)
                     {
                         depthPoint = buf;
                     }
-
                     p.X = (float)(columns * xscale);
                     p.Y = (float)(rows * yscale);
                     p.Z = (float)(depthPoint * dscale);
@@ -207,7 +251,6 @@ namespace gosand
                     i++;
                 }
             }
-
             return points;
         }
 
@@ -227,14 +270,13 @@ namespace gosand
             mesh.Vertices.AddVertices(vertices);
             mesh.VertexColors.SetColors(colors);
             int start_y = 1, start_x = 1, max_y = 480, max_x = 640;
-
-            if (rect != null) {
+            if (rect != null)
+            {
                 applyIfValueInRange((int)rect.Value.PointAt(0, 0).Y, max_y, ref start_y);
                 applyIfValueInRange((int)rect.Value.PointAt(0, 0).X, max_x, ref start_x);
                 applyIfValueInRange((int)rect.Value.PointAt(1, 1).Y, max_y, ref max_y);
                 applyIfValueInRange((int)rect.Value.PointAt(1, 1).X, max_x, ref max_x);
             }
-           
             for (int y = start_y; y < max_y - 1; y++)
             {
                 for (int x = start_x; x < max_x - 1; x++)
@@ -244,6 +286,7 @@ namespace gosand
                     mesh.Faces.AddFace(j - 1, j, i, i - 1);
                 }
             }
+            
             return mesh;
         }
 
@@ -292,5 +335,4 @@ namespace gosand
 
         protected override Bitmap Icon => gosand.Properties.Resources.kinect;
     }
-
 }
