@@ -64,7 +64,15 @@ namespace gosand
             using (Stream stream = response.GetResponseStream())
             using (StreamReader reader = new StreamReader(stream))
             {
-                return Convert.FromBase64String(reader.ReadToEnd());
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    return Convert.FromBase64String(reader.ReadToEnd());
+                }
+                else
+                {
+                    ShowComponentError("Could not connect to Server");
+                    return null;
+                }
             }
         }
 
@@ -138,7 +146,7 @@ namespace gosand
                 //
                 // Process retrieving data and meshing async
                 //
-                Task<Tuple<GH_Mesh, Curve[]>> computingTask = new Task<Tuple<GH_Mesh, Curve[]>>(() => makeMesh(path.Value, palette, xscale.Value, yscale.Value, dscale.Value, crect, frequency.Value, distance.Value));
+                Task<Tuple<GH_Mesh, Curve[]>> computingTask = new Task<Tuple<GH_Mesh, Curve[]>>(() => generateMesh(path.Value, palette, xscale.Value, yscale.Value, dscale.Value, crect, frequency.Value, distance.Value));
                 computingTask.ContinueWith(r =>
                 {
                     if (r.Status == TaskStatus.RanToCompletion)
@@ -165,7 +173,7 @@ namespace gosand
             ScheduleSolve();
         }
 
-        private Tuple<GH_Mesh, Curve[]> makeMesh(string path, List<GH_Colour> palette, double xscale, double yscale, double dscale, GH_Rectangle crect, int frequency, double distance)
+        private Tuple<GH_Mesh, Curve[]> generateMesh(string path, List<GH_Colour> palette, double xscale, double yscale, double dscale, GH_Rectangle crect, int frequency, double distance)
         {
             //
             // Connect to Gosand sever either using a websocket or by simple GET requests
