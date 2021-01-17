@@ -11,6 +11,8 @@ Why? I started building a magical sandbox - which is basically a box full of san
 - Client: C#.NET Component for Rhino/Grasshopper
 - Hardware: Kinect for XBOX 360 ModelNr. 1414, Kinect PC USB Cable, Raspberry pi 3 Model B+, a box full of sand.
 
+![Checkout this video to see gosand in action](https://vimeo.com/501405320)
+
 ## Server Installation and Usage
 
 First, be sure that you have installed [libfreenect](https://github.com/OpenKinect/libfreenect).
