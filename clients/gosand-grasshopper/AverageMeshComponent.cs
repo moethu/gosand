@@ -166,6 +166,6 @@ namespace gosand
             }
         }
 
-        protected override Bitmap Icon => gosand.Properties.Resources.kinect;
+        protected override Bitmap Icon => gosand.Properties.Resources.mesh;
     }
 }

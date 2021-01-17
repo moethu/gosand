@@ -79,6 +79,12 @@
     <None Include="packages.config" />
     <None Include="Resources\kinect.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\mesh.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\sand.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>Copy "$(TargetDir)$(TargetFileName)" "$(TargetDir)$(TargetName).gha"</PostBuildEvent>
