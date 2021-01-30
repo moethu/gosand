@@ -20,7 +20,7 @@ Once the library is installed, simply `go run .` or build and run. All dependenc
 Note: I used a Raspi 3 Model B+, just make sure you are using a proper power supply for the raspi and no USB Charger.
 
 Once the server is running you can simply test it by opening root: http://localhost:4777/
-which renders a webGL scene showing the pointcloud of what the camera currently sees
+which renders a webGL scene showing the pointcloud of what the camera currently sees. [Checkout this video.](https://vimeo.com/506421778)
 
 ![](https://raw.githubusercontent.com/moethu/gosand/main/images/home.png)
 
