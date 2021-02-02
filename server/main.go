@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"html/template"
 	"image"
 	"image/jpeg"
+	"io/ioutil"
 	"log"
 
 	"context"
@@ -61,6 +63,7 @@ func main() {
 
 	router.Static("/static/", "./static/")
 	router.GET("/deptharray/", GetArray)
+	router.GET("/circles/", GetCircles)
 	router.GET("/frame/:type/", GetFrame)
 	router.Any("/stream/:type/:time/", ServeWebsocket)
 	router.GET("/", home)
@@ -153,6 +156,43 @@ func GetArray(c *gin.Context) {
 	freenect_device.SetLed(freenect.LED_GREEN)
 	depth_array := freenect_device.DepthArray()
 	c.Data(200, "text/plain", []byte(base64.StdEncoding.EncodeToString(depth_array)))
+	freenect_device.SetLed(freenect.LED_OFF)
+}
+
+// GetCircles godoc
+// @Summary Get all visible circles
+// @Description returns an array of visible circles
+// @Accept  json
+// @Produce  json
+// @Success 200 {array} byte
+// @Router /circles/ [get]
+func GetCircles(c *gin.Context) {
+	freenect_device.SetLed(freenect.LED_GREEN)
+	cs := detectCircles(config{})
+	c.JSON(200, cs)
+	freenect_device.SetLed(freenect.LED_OFF)
+}
+
+// PostCircles godoc
+// @Summary Get all visible circles a using custom opencv config
+// @Description returns an array of visible circles
+// @Accept  json
+// @Produce  json
+// @Success 200 {array} byte
+// @Router /circles/ [get]
+func PostCircles(c *gin.Context) {
+	freenect_device.SetLed(freenect.LED_GREEN)
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		c.Data(500, "text/pain", nil)
+	}
+	var cfg config
+	err = json.Unmarshal(jsonData, &cfg)
+	if err != nil {
+		c.Data(500, "text/plain", nil)
+	}
+	cs := detectCircles(cfg)
+	c.JSON(200, cs)
 	freenect_device.SetLed(freenect.LED_OFF)
 }
 
