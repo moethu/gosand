@@ -68,6 +68,17 @@
 
             const vertices = getDepthArray();
 
+            if (vertices[-1]) {
+                const reconMaterial = new THREE.PointsMaterial({
+                    color: new THREE.Color(),
+                    map: texture,
+                    size: 5,
+                    alphaTest: 0.5
+                });
+                const recongeo = new THREE.BufferGeometry().setFromPoints(vertices[-1]);
+                group.add(new THREE.Points(recongeo, reconMaterial));
+            }
+
             for (var i = 0; i < 256; i++) {
                 if (vertices[i]) {
                     let points_depth = vertices[i]
@@ -103,6 +114,13 @@
             renderer.render(scene, camera);
         }
 
+        function getCircles() {
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.open("GET", "./circles/", false); // false for synchronous request
+            xmlHttp.send(null);
+            return JSON.parse(responseText);
+        }
+
         function getDepthArray() {
             var xmlHttp = new XMLHttpRequest();
             xmlHttp.open("GET", "./deptharray/", false); // false for synchronous request
@@ -111,17 +129,30 @@
         }
 
         function base64ToPointArray(base64) {
+            let circles = getCircles()
             let binary_string = window.atob(base64);
             let len = binary_string.length;
             var data = new Array(256);
+            data[-1] = []
             let i = 0;
             for (let y = 0; y < 480; y++) {
                 for (let x = 0; x < 640; x++) {
                     var depth = binary_string.charCodeAt(i);
-                    if (data[depth] == undefined) {
-                        data[depth] = [];
+                    let recon = false
+
+                    circles.forEach(circle => {
+                        if (circle.x == x && circle.y == y) {
+                            data[-1].push(new THREE.Vector3(x, y, depth))
+                            recon = true
+                        }
+                    });
+
+                    if (!recon) {
+                        if (data[depth] == undefined) {
+                            data[depth] = [];
+                        }
+                        data[depth].push(new THREE.Vector3(x, y, depth))
                     }
-                    data[depth].push(new THREE.Vector3(x, y, depth))
                     i++;
                 }
             }
