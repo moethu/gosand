@@ -118,7 +118,7 @@
             var xmlHttp = new XMLHttpRequest();
             xmlHttp.open("GET", "./circles/", false); // false for synchronous request
             xmlHttp.send(null);
-            return JSON.parse(responseText);
+            return JSON.parse(xmlHttp.responseText);
         }
 
         function getDepthArray() {
@@ -139,13 +139,14 @@
                 for (let x = 0; x < 640; x++) {
                     var depth = binary_string.charCodeAt(i);
                     let recon = false
-
-                    circles.forEach(circle => {
-                        if (circle.x == x && circle.y == y) {
-                            data[-1].push(new THREE.Vector3(x, y, depth))
-                            recon = true
-                        }
-                    });
+                    if (circles != null) {
+                        circles.forEach(circle => {
+                            if (circle.x == x && circle.y == y) {
+                                data[-1].push(new THREE.Vector3(x, y, depth))
+                                recon = true
+                            }
+                        });
+                    }
 
                     if (!recon) {
                         if (data[depth] == undefined) {
