@@ -17,7 +17,7 @@ namespace gosand
     /// </summary>
     public class GosandCircRec : GH_Component
     {
-        public GosandCircRec() : base("Circle Recognition", "CircleRecognition", "Triggers OpenCV circle recognition in a gosand server", "Gosand", "Device") { }
+        public GosandCircRec() : base("Circle Recognition", "CircleRecognition", "Updates OpenCV circle recognition config in a gosand server", "Gosand", "Device") { }
 
         /// <summary>
         /// Register Input Ports
@@ -32,6 +32,7 @@ namespace gosand
             pManager.AddNumberParameter("MinDist", "md", "Minimum distance between the centers of the detected circles.", GH_ParamAccess.item);
             pManager.AddNumberParameter("Param1", "p1", "First method-specific parameter.", GH_ParamAccess.item);
             pManager.AddNumberParameter("Param2", "p2", "Second method-specific parameter.", GH_ParamAccess.item);
+            pManager.AddBooleanParameter("Update", "u", "Trigger to update server config", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -40,7 +41,7 @@ namespace gosand
         /// <param name="pManager"></param>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddCircleParameter("Circles", "c", "Circles", GH_ParamAccess.list);
+           
         }
 
         /// <summary>
@@ -63,37 +64,29 @@ namespace gosand
             DA.GetData<GH_Number>(5, ref param1);
             GH_Number param2 = new GH_Number();
             DA.GetData<GH_Number>(6, ref param2);
+            GH_Boolean trigger = new GH_Boolean();
+            DA.GetData<GH_Boolean>(7, ref trigger);
 
-            var httpWebRequest = (HttpWebRequest)WebRequest.Create(path.Value + "/circles/");
-            httpWebRequest.ContentType = "application/json";
-            httpWebRequest.Method = "POST";
-
-            using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
+            if (trigger.Value)
             {
-                string json =
-                "{\"dp\":\"" + dp.Value + "\"," +
-                "\"mindist\":\"" + mindist.Value + "\"," +
-                "\"param1\":\"" + param1.Value + "\"," +
-                "\"param2\":\"" + param2.Value + "\"," +
-                "\"min\":\"" + minrad.Value + "\"," +
-                "\"max\":\"" + maxrad.Value + "\"}";
-                streamWriter.Write(json);
-            }
+                var httpWebRequest = (HttpWebRequest)WebRequest.Create(path.Value + "/circledetectionconfig/");
+                httpWebRequest.ContentType = "application/json";
+                httpWebRequest.Method = "POST";
 
-            var circles;
-            var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-            using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-            {
-                var json = streamReader.ReadToEnd();
-                circles = JsonConvert.DeserializeObject<Dictionary<string, int>[]>(json);
-            }
-            List<GH_Circle> cs = new List<GH_Circles>();
-            foreach (Dictionary<string, int> dict in circles)
-            {
-                cs.Add(new GH_Circle(new Circle(dict["x"], dict["y"], 0, dict["r"])));
-            }
+                using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
+                {
+                    string json =
+                    "{\"dp\":\"" + dp.Value + "\"," +
+                    "\"mindist\":\"" + mindist.Value + "\"," +
+                    "\"param1\":\"" + param1.Value + "\"," +
+                    "\"param2\":\"" + param2.Value + "\"," +
+                    "\"min\":\"" + minrad.Value + "\"," +
+                    "\"max\":\"" + maxrad.Value + "\"}";
+                    streamWriter.Write(json);
+                }
 
-            DA.SetData(0, cs);
+                var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+            }
         }
 
         public override Guid ComponentGuid

@@ -107,6 +107,11 @@ namespace gosand
         private byte[] buffer;
 
         /// <summary>
+        /// Circle buffer for websocket data
+        /// </summary>
+        private List<GH_Circle> circles;
+
+        /// <summary>
         /// Triggered when solving the instance
         /// </summary>
         /// <param name="DA"></param>
@@ -222,7 +227,13 @@ namespace gosand
         /// <param name="e"></param>
         private void Websocket_MessageReceived(object sender, MessageReceivedEventArgs e)
         {
-            buffer = Convert.FromBase64String(e.Message);
+            var payload = JsonConvert.DeserializeObject<Dictionary<string, object>[]>(e.Message);
+            buffer = Convert.FromBase64String(payload[d]);
+            circles = new List<GH_Circles>();
+            foreach (Dictionary<string, int> dict in payload[c])
+            {
+                circles.Add(new GH_Circle(new Circle(dict["x"], dict["y"], dict["z"], dict["r"])));
+            }                 
         }
 
         /// <summary>
@@ -242,16 +253,12 @@ namespace gosand
             colors = new Color[640 * 480];
             var p = new Point3f();
             var i = 0;
-            var buf = 0;
+
             for (var rows = 0; rows < 480; rows++)
             {
                 for (var columns = 0; columns < 640; columns++)
                 {
                     depthPoint = Convert.ToInt32(deptharray[i]);
-                    if (depthPoint == 0)
-                    {
-                        depthPoint = buf;
-                    }
                     p.X = (float)(columns * xscale);
                     p.Y = (float)(rows * yscale);
                     p.Z = (float)(depthPoint * dscale);
@@ -260,7 +267,6 @@ namespace gosand
                         colors[i] = palette[depthPoint].Value;
                     }
                     points[i] = p;
-                    buf = depthPoint;
                     i++;
                 }
             }
