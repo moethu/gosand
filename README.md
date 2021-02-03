@@ -1,7 +1,8 @@
 
 <img src="https://raw.githubusercontent.com/moethu/gosand/main/images/logo.png" height="50">
 
-Gosand is a simple webserver serving a Kinects data using gonect - a Go wrapper for the [libfreenect](https://github.com/OpenKinect/libfreenect) library.
+Gosand is webserver serving a Kinect's depth data and overlaying it with opencv circle recognition for locating circular objects in 3D space.
+This implementation uses gonect: a Go wrapper for the [libfreenect](https://github.com/OpenKinect/libfreenect) library and [gocv](https://gocv.io/) a go warpper for OpenCV. 
 
 ![](https://raw.githubusercontent.com/moethu/gosand/main/images/concept.png)
 
@@ -12,6 +13,12 @@ Why? I started building a magical sandbox - which is basically a box full of san
 - Hardware: Kinect for XBOX 360 ModelNr. 1414, Kinect PC USB Cable, Raspberry pi 3 Model B+, a box full of sand.
 
 [Checkout this video to see gosand in action](https://vimeo.com/501405320)
+
+## Overlaying OpenCV Circle Recognition
+
+Gosand uses OpenCVs circle recognition to detect circular objects within the RGB frame. As the circles are well defined in 2D space (X,Y) they are lacking a robust location in depth (Z). Overlaying information from both frames (depth frame and RGB frame) results in a precise location for circular objects in 3D space.
+
+![](https://raw.githubusercontent.com/moethu/gosand/main/images/circleDetection.png)
 
 ## Server Installation and Usage
 
