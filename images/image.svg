@@ -14,7 +14,10 @@
    version="1.1"
    id="svg8"
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
-   sodipodi:docname="image.svg">
+   sodipodi:docname="image.svg"
+   inkscape:export-filename="/home/maximilian/Documents/Git/gosand/images/image.svg.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96">
   <defs
      id="defs2">
     <linearGradient
@@ -65,8 +68,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4"
-     inkscape:cx="353.36574"
-     inkscape:cy="249.98742"
+     inkscape:cx="391.32499"
+     inkscape:cy="247.13028"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
@@ -246,5 +249,64 @@
        d="m 157.61607,266.10044 v 9.63839"
        id="path4643-1"
        inkscape:connector-curvature="0" />
-  </g>
+    <ellipse
+       style="fill:#040608;fill-opacity:1;stroke:none;stroke-width:0.2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path858"
+       cx="51.310268"
+       cy="248.71353"
+       rx="1.6063988"
+       ry="0.8504464" />
+    <ellipse
+       style="fill:#040608;fill-opacity:1;stroke:none;stroke-width:0.2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path858-3"
+       cx="37.419643"
+       cy="255.8006"
+       rx="1.6063988"
+       ry="0.8504464" />
+    <ellipse
+       style="fill:#040608;fill-opacity:1;stroke:none;stroke-width:0.13750675;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path858-6"
+       cx="164.29326"
+       cy="233.9313"
+       rx="0.96738935"
+       ry="0.66755497" />
+    <ellipse
+       style="fill:#040608;fill-opacity:1;stroke:none;stroke-width:0.13750675;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path858-3-7"
+       cx="155.92818"
+       cy="239.49426"
+       rx="0.96738935"
+       ry="0.66755497" />
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot4533-9-6-5"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
+       transform="matrix(0.26458333,0,0,0.26458333,116.92368,208.71844)"><flowRegion
+         id="flowRegion4535-3-5-3"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start"><rect
+           id="rect4537-2-9-5"
+           width="232.14285"
+           height="45.714287"
+           x="131.42857"
+           y="30.686159"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start" /></flowRegion><flowPara
+         id="flowPara4539-4-9-6">Objects X,Y,Z</flowPara></flowRoot>    <path
+       style="fill:none;stroke:#000000;stroke-width:0.05;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 164.37679,222.64082 v 9.63839"
+       id="path4643-1-2"
+       inkscape:connector-curvature="0" />
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot4533-9-6-5-9"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
+       transform="matrix(0.26458333,0,0,0.26458333,108.71134,238.59313)"><flowRegion
+         id="flowRegion4535-3-5-3-1"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start"><rect
+           id="rect4537-2-9-5-2"
+           width="232.14285"
+           height="45.714287"
+           x="131.42857"
+           y="30.686159"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start" /></flowRegion><flowPara
+         id="flowPara4539-4-9-6-7">Landscape X,Y,Z</flowPara></flowRoot>  </g>
 </svg>
