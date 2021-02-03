@@ -10,6 +10,7 @@ type circle struct {
 	X int `json:"x"`
 	Y int `json:"y"`
 	R int `json:"r"`
+	Z int `json:"z"`
 }
 
 type config struct {
@@ -20,6 +21,8 @@ type config struct {
 	Min     int     `json:"min"`
 	Max     int     `json:"max"`
 }
+
+var circleDetectionConfig config
 
 func detectCircles(cfg config) []circle {
 	frame := freenect_device.RGBAFrame()
@@ -40,7 +43,7 @@ func detectCircles(cfg config) []circle {
 	circles := gocv.NewMat()
 	defer circles.Close()
 
-	defaultconfig := config{Dp: 1, Mindist: float64(img.Rows() / 8), Param1: 75, Param2: 20, Min: 1, Max: 0}
+	defaultconfig := config{Dp: 1, Mindist: float64(img.Rows() / 8), Param1: 75, Param2: 20, Min: 4, Max: 0}
 	if (config{}) == cfg {
 		cfg = defaultconfig
 	}

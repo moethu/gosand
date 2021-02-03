@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"html/template"
 	"image"
@@ -40,6 +39,7 @@ var freenect_device_present = false
 func main() {
 	flag.Parse()
 	log.SetFlags(0)
+	circleDetectionConfig = config{}
 	led_sleep_time, _ = time.ParseDuration("200ms")
 
 	freenect_device = freenect.NewFreenectDevice(0)
@@ -62,8 +62,8 @@ func main() {
 	}
 
 	router.Static("/static/", "./static/")
-	router.GET("/deptharray/", GetArray)
-	router.GET("/circles/", GetCircles)
+	router.GET("/data/", GetArray)
+	router.POST("/circledetectionconfig/", PostCircles)
 	router.GET("/frame/:type/", GetFrame)
 	router.Any("/stream/:type/:time/", ServeWebsocket)
 	router.GET("/", home)
@@ -154,46 +154,37 @@ func GetFrame(c *gin.Context) {
 // @Router /deptharray/ [get]
 func GetArray(c *gin.Context) {
 	freenect_device.SetLed(freenect.LED_GREEN)
-	depth_array := freenect_device.DepthArray()
-	c.Data(200, "text/plain", []byte(base64.StdEncoding.EncodeToString(depth_array)))
-	freenect_device.SetLed(freenect.LED_OFF)
-}
+	depth_array := freenect_device.DepthArray(true)
 
-// GetCircles godoc
-// @Summary Get all visible circles
-// @Description returns an array of visible circles
-// @Accept  json
-// @Produce  json
-// @Success 200 {array} byte
-// @Router /circles/ [get]
-func GetCircles(c *gin.Context) {
-	freenect_device.SetLed(freenect.LED_GREEN)
-	cs := detectCircles(config{})
-	c.JSON(200, cs)
+	cs := detectCircles(circleDetectionConfig)
+	for i, circle := range cs {
+		depth := depth_array[int(circle.X*480+circle.Y)]
+		cs[i].Z = int(depth)
+	}
+
+	c.JSON(200, payload{Depthframe: depth_array, Circles: cs})
 	freenect_device.SetLed(freenect.LED_OFF)
 }
 
 // PostCircles godoc
-// @Summary Get all visible circles a using custom opencv config
-// @Description returns an array of visible circles
+// @Summary Update OpenCV Circle Detection Config
+// @Description returns OK
 // @Accept  json
 // @Produce  json
 // @Success 200 {array} byte
-// @Router /circles/ [get]
+// @Router /circles/ [post]
 func PostCircles(c *gin.Context) {
-	freenect_device.SetLed(freenect.LED_GREEN)
 	jsonData, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
-		c.Data(500, "text/pain", nil)
+		c.JSON(500, err)
 	}
 	var cfg config
 	err = json.Unmarshal(jsonData, &cfg)
 	if err != nil {
-		c.Data(500, "text/plain", nil)
+		c.JSON(500, err)
 	}
-	cs := detectCircles(cfg)
-	c.JSON(200, cs)
-	freenect_device.SetLed(freenect.LED_OFF)
+	circleDetectionConfig = cfg
+	c.JSON(200, "OK")
 }
 
 var upgrader = websocket.Upgrader{}

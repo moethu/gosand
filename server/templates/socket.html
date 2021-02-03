@@ -20,7 +20,7 @@
         init();
         animate();
 
-        var ws = new WebSocket("ws://{{.}}/stream/deptharray/400/");
+        var ws = new WebSocket("ws://{{.}}/stream/depthwithcircles/400/");
         ws.onopen = function (evt) {
             console.log("Connected to Server");
         }
@@ -30,9 +30,9 @@
         }
         ws.onmessage = function (evt) {
             if (group) { group.children = []; }
+            let payload = JSON.parse(evt.data)
 
-            var vertices = base64ToPointArray(evt.data);
-
+            var vertices = base64ToPointArray(payload);
 
             if (vertices[-1]) {
                 const reconMaterial = new THREE.PointsMaterial({
@@ -125,20 +125,13 @@
             render();
         }
 
-        function getCircles() {
-            var xmlHttp = new XMLHttpRequest();
-            xmlHttp.open("GET", "./circles/", false); // false for synchronous request
-            xmlHttp.send(null);
-            return JSON.parse(xmlHttp.responseText);
-        }
-
         function render() {
             renderer.render(scene, camera);
         }
 
-        function base64ToPointArray(base64) {
-            let circles = getCircles()
-            let binary_string = window.atob(base64);
+        function base64ToPointArray(payload) {
+            let circles = payload.c
+            let binary_string = window.atob(payload.d);
             let len = binary_string.length;
             var data = new Array(256);
             data[-1] = []
@@ -146,25 +139,20 @@
             for (let y = 0; y < 480; y++) {
                 for (let x = 0; x < 640; x++) {
                     var depth = binary_string.charCodeAt(i);
-                    let recon = false
-                    if (circles != null) {
-                        circles.forEach(circle => {
-                            if (circle.x == x && circle.y == y) {
-                                data[-1].push(new THREE.Vector3(x, y, depth))
-                                recon = true
-                            }
-                        });
+                    if (data[depth] == undefined) {
+                        data[depth] = [];
                     }
-
-                    if (!recon) {
-                        if (data[depth] == undefined) {
-                            data[depth] = [];
-                        }
-                        data[depth].push(new THREE.Vector3(x, y, depth))
-                    }
+                    data[depth].push(new THREE.Vector3(x, y, depth))
                     i++;
                 }
             }
+
+            if (circles) {
+                circles.forEach(circle => {
+                    data[-1].push(new THREE.Vector3(circle.x, circle.y, circle.z))
+                })
+            }
+
             return data;
         }
 

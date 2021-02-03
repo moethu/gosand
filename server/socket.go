@@ -1,10 +1,7 @@
 package main
 
 import (
-	"bytes"
-	"encoding/base64"
-	"image"
-	"image/jpeg"
+	"encoding/json"
 	"log"
 	"time"
 
@@ -30,6 +27,11 @@ type Client struct {
 	write  chan []byte // images and data to client
 	read   chan []byte // commands from client
 	closed bool        // closed by peer
+}
+
+type payload struct {
+	Depthframe []byte   `json:"d"`
+	Circles    []circle `json:"c"`
 }
 
 // streamReader reads messages from the websocket connection and fowards them to the read channel
@@ -130,17 +132,20 @@ func ServeWebsocket(c *gin.Context) {
 
 	client := &Client{conn: conn, write: cWrite, read: cRead, closed: false}
 
-	mode := "debug-stream"
+	circleDetection := true
+	if c.Params.ByName("type") == "depth" {
+		circleDetection = false
+	}
+
 	if freenect_device_present {
 		freenect_device.SetLed(freenect.LED_BLINK_RED_YELLOW)
-		mode = c.Params.ByName("type")
 	}
 
 	wait_time, err := time.ParseDuration(c.Params.ByName("time") + "ms")
 	if err != nil {
 		wait_time, _ = time.ParseDuration("200ms")
 	}
-	go client.render(mode, wait_time)
+	go client.render(circleDetection, wait_time)
 
 	// run reader and writer in two different go routines
 	// so they can act concurrently
@@ -148,41 +153,31 @@ func ServeWebsocket(c *gin.Context) {
 	go client.streamWriter()
 }
 
-func (c *Client) render(mode string, wait_time time.Duration) {
+func (c *Client) render(circleDetection bool, wait_time time.Duration) {
 	for {
-		var img image.Image
-		payload := new(bytes.Buffer)
-
-		switch mode {
-		case "depthframe":
-			img = freenect_device.DepthFrame()
-			jpeg.Encode(payload, img, &jpeg.Options{Quality: image_quality})
-			log.Println(len(payload.Bytes()))
-			imgBase64Str := base64.StdEncoding.EncodeToString([]byte(payload.Bytes()))
-			c.write <- []byte(imgBase64Str)
-		case "deptharray":
-			depth_array := freenect_device.DepthArray()
-			depth_array_b64 := base64.StdEncoding.EncodeToString(depth_array)
-			c.write <- []byte(depth_array_b64)
-		case "irframe":
-			img = freenect_device.IRFrame()
-			jpeg.Encode(payload, img, &jpeg.Options{Quality: image_quality})
-			c.write <- payload.Bytes()
-		case "rgbframe":
-			img = freenect_device.RGBAFrame()
-			jpeg.Encode(payload, img, &jpeg.Options{Quality: image_quality})
-			c.write <- payload.Bytes()
-		default:
-			c.write <- []byte("test")
+		depth_array := freenect_device.DepthArray(true)
+		var cs []circle
+		if circleDetection {
+			cs = detectCircles(circleDetectionConfig)
+			for i, circle := range cs {
+				depth := depth_array[int(circle.X*480+circle.Y)]
+				cs[i].Z = int(depth)
+			}
 		}
-
+		p := payload{Depthframe: depth_array, Circles: cs}
+		b, err := json.Marshal(p)
+		if err != nil {
+			log.Println(err)
+		} else {
+			c.write <- b
+		}
 		time.Sleep(wait_time)
 
 		if c.closed {
 			if freenect_device_present {
 				freenect_device.SetLed(freenect.LED_OFF)
 			}
-			break
+			return
 		}
 	}
 }

@@ -259,16 +259,21 @@ func (d *FreenectDevice) DepthFrame() *image.RGBA {
 	return img
 }
 
-func (d *FreenectDevice) DepthArray() []byte {
+func (d *FreenectDevice) DepthArray(lesszero bool) []byte {
 	data, _ := d.RawDepthFrame(FREENECT_DEPTH_REGISTERED)
 
 	result := make([]byte, 640*480)
 	i := 0
+	before := uint8(0)
 	for row := 0; row < 480; row++ {
 		for col := 0; col < 640; col++ {
 			sourcePos := C.int(row*640*2 + col*2)
 			val := uint8(C.get_byte(data, sourcePos))
+			if val == 0 && lesszero {
+				val = before
+			}
 			result[i] = val
+			before = val
 			i++
 		}
 	}
