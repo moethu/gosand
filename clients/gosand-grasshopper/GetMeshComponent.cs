@@ -49,6 +49,7 @@ namespace gosand
         {
             pManager.AddMeshParameter("Mesh", "M", "Mesh", GH_ParamAccess.item);
             pManager.AddCurveParameter("Contour Curves", "C", "Contour Curves", GH_ParamAccess.list);
+            pManager.AddCircleParameter("Circles", "C", "Detected Circles", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -56,8 +57,10 @@ namespace gosand
         /// </summary>
         /// <param name="uri">Gosand server url</param>
         /// <returns>Response in bytes</returns>
-        public byte[] GetBytes(string uri)
+        public Tuple<byte[],List<GH_Circle>> GetBytes(string uri)
         {
+            byte[] bytes;
+            List<GH_Circle> cs;
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
             request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
             using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
@@ -66,7 +69,17 @@ namespace gosand
             {
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
-                    return Convert.FromBase64String(reader.ReadToEnd());
+                    var payload = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(reader.ReadToEnd());
+                    bytes = Convert.FromBase64String((string)payload["d"]);
+                    cs = new List<GH_Circle>();
+                    if (payload["c"] != null)
+                    {
+                        foreach (IDictionary<string, Newtonsoft.Json.Linq.JToken> dict in (ICollection<Newtonsoft.Json.Linq.JToken>)payload["c"])
+                        {
+                            var pt = new Point3d(dict["x"].ToObject<int>(), dict["y"].ToObject<int>(),dict["z"].ToObject<int>());
+                            cs.Add(new GH_Circle(new Circle(pt, dict["r"].ToObject<int>())));
+                        }
+                    }
                 }
                 else
                 {
@@ -74,6 +87,7 @@ namespace gosand
                     return null;
                 }
             }
+            return new Tuple<byte[], List<GH_Circle>>(bytes, cs);
         }
 
         /// <summary>
@@ -89,7 +103,7 @@ namespace gosand
         /// <summary>
         /// The actual output when processing data from Kinect
         /// </summary>
-        Tuple<GH_Mesh, Curve[]> result = new Tuple<GH_Mesh, Curve[]>(null,null);
+        Tuple<GH_Mesh, Curve[], List<GH_Circle>> result = new Tuple<GH_Mesh, Curve[], List<GH_Circle>>(null,null,null);
 
         /// <summary>
         /// indicates if a background task is still in process
@@ -99,7 +113,7 @@ namespace gosand
         /// <summary>
         /// The previous processing result
         /// </summary>
-        Tuple<GH_Mesh, Curve[]> previousResult = new Tuple<GH_Mesh, Curve[]>(null, null);
+        Tuple<GH_Mesh, Curve[], List<GH_Circle>> previousResult = new Tuple<GH_Mesh, Curve[], List<GH_Circle>>(null,null, null);
 
         /// <summary>
         /// Byte Array buffer for websocket data
@@ -120,6 +134,7 @@ namespace gosand
             if (result.Item1 == null) result = previousResult;
             DA.SetData(0, result.Item1);
             DA.SetDataList(1, result.Item2);
+            DA.SetDataList(2, result.Item3);
 
             if (!taskInProcess)
             {
@@ -151,7 +166,7 @@ namespace gosand
                 //
                 // Process retrieving data and meshing async
                 //
-                Task<Tuple<GH_Mesh, Curve[]>> computingTask = new Task<Tuple<GH_Mesh, Curve[]>>(() => generateMesh(path.Value, palette, xscale.Value, yscale.Value, dscale.Value, crect, frequency.Value, distance.Value));
+                Task<Tuple<GH_Mesh, Curve[], List<GH_Circle>>> computingTask = new Task<Tuple<GH_Mesh, Curve[], List<GH_Circle>>>(() => generateMesh(path.Value, palette, xscale.Value, yscale.Value, dscale.Value, crect, frequency.Value, distance.Value));
                 computingTask.ContinueWith(r =>
                 {
                     if (r.Status == TaskStatus.RanToCompletion)
@@ -166,7 +181,7 @@ namespace gosand
                     }
                     else if (r.Status == TaskStatus.Faulted)
                     {
-                        result = new Tuple<GH_Mesh, Curve[]>(null,null);
+                        result = new Tuple<GH_Mesh, Curve[], List<GH_Circle>>(null,null,null);
                         taskInProcess = false;
                         ShowComponentError("Could not connect to Server");
                     }
@@ -179,19 +194,20 @@ namespace gosand
             ScheduleSolve();
         }
 
-        private Tuple<GH_Mesh, Curve[]> generateMesh(string path, List<GH_Colour> palette, double xscale, double yscale, double dscale, GH_Rectangle crect, int frequency, double distance)
+        private Tuple<GH_Mesh, Curve[], List<GH_Circle>> generateMesh(string path, List<GH_Colour> palette, double xscale, double yscale, double dscale, GH_Rectangle crect, int frequency, double distance)
         {
             //
             // Connect to Gosand sever either using a websocket or by simple GET requests
             //
             if (!path.ToLower().StartsWith("ws"))
             {
-                byte[] data = GetBytes(String.Format("{0}/deptharray/", path));
+                var data = GetBytes(String.Format("{0}/data/", path));
                 if (data != null)
                 {
                     Color[] colors = null;
-                    var pointaray = depthArrayToPointArray(data, palette, out colors, xscale, yscale, dscale);
-                    return createMesh(pointaray, colors, crect, dscale, distance);
+                    var pointaray = depthArrayToPointArray(data.Item1, palette, out colors, xscale, yscale, dscale);
+                    var m = createMesh(pointaray, colors, crect, dscale, distance);
+                    return new Tuple<GH_Mesh, Curve[], List<GH_Circle>>(m.Item1, m.Item2, data.Item2);
                 }
             }
             else
@@ -200,7 +216,7 @@ namespace gosand
                 if (websocket == null || websocket.State == WebSocketState.Closed)
                 {
                     int server_refresh_rate = frequency < 50 ? 50 : frequency;
-                    websocket = new WebSocket(String.Format("{0}/stream/deptharray/{1}/", path, server_refresh_rate));
+                    websocket = new WebSocket(String.Format("{0}/stream/depthandcircles/{1}/", path, server_refresh_rate));
                     websocket.EnableAutoSendPing = true;
                     websocket.MessageReceived += Websocket_MessageReceived;
                     websocket.Open();
@@ -212,11 +228,12 @@ namespace gosand
                     {
                         Color[] colors = null;
                         var pointaray = depthArrayToPointArray(buffer, palette, out colors, xscale, yscale, dscale);
-                        return createMesh(pointaray, colors, crect, dscale, distance);
+                        var m = createMesh(pointaray, colors, crect, dscale, distance);
+                        return new Tuple<GH_Mesh, Curve[], List<GH_Circle>>(m.Item1, m.Item2, circles);
                     }
                 }
             }
-            return new Tuple<GH_Mesh, Curve[]>(null,null);
+            return new Tuple<GH_Mesh, Curve[], List<GH_Circle>>(null, null, null);
         }
 
         /// <summary>
@@ -227,13 +244,17 @@ namespace gosand
         /// <param name="e"></param>
         private void Websocket_MessageReceived(object sender, MessageReceivedEventArgs e)
         {
-            var payload = JsonConvert.DeserializeObject<Dictionary<string, object>[]>(e.Message);
-            buffer = Convert.FromBase64String(payload[d]);
-            circles = new List<GH_Circles>();
-            foreach (Dictionary<string, int> dict in payload[c])
+            var payload = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(e.Message);
+            buffer = Convert.FromBase64String((string)payload["d"]);
+            circles = new List<GH_Circle>();
+            if (payload["c"] != null)
             {
-                circles.Add(new GH_Circle(new Circle(dict["x"], dict["y"], dict["z"], dict["r"])));
-            }                 
+                foreach (IDictionary<string, Newtonsoft.Json.Linq.JToken> dict in (ICollection<Newtonsoft.Json.Linq.JToken>)payload["c"])
+                {
+                    var pt = new Point3d(dict["x"].ToObject<int>(), dict["y"].ToObject<int>(), dict["z"].ToObject<int>());
+                    circles.Add(new GH_Circle(new Circle(pt, dict["r"].ToObject<int>())));
+                }
+            }                
         }
 
         /// <summary>
