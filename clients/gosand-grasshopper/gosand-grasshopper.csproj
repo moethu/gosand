@@ -66,6 +66,7 @@
     <Compile Include="AverageMeshComponent.cs" />
     <Compile Include="CircleRecognitionComponent.cs" />
     <Compile Include="GetMeshComponent.cs" />
+    <Compile Include="GosandTypes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
