@@ -1,3 +1,10 @@
+using System;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+using Grasshopper.Kernel.Types;
+using Rhino.Geometry;
+using System.Drawing;
+
 namespace gosand
 {
     class Payload
@@ -6,7 +13,7 @@ namespace gosand
         public string Depthframe;
 
         [JsonProperty("c")]
-        public GosandCircle[] Circles;
+        public Circle[] Circles;
        
     }
 
@@ -25,7 +32,7 @@ namespace gosand
             return new Rhino.Geometry.Point3d(this.X * scale.X, this.Y * scale.Y, this.Z * scale.Z);
         }
 
-        public Rhino.Geometry.Cirlce ToCircle(Point3d scale){
+        public Rhino.Geometry.Circle ToCircle(Point3d scale){
             return new Rhino.Geometry.Circle(this.ToPoint3d(scale), this.Radius);
         }
     }
@@ -63,9 +70,11 @@ namespace gosand
 
             Color[] colors = null;
             var pointarray = d.depthArrayToPointArray(buffer, palette, out colors);
-            var m = createMesh(pointarray, colors, crect, distance);
-            this.Mesh = m.Item1;
-            this.Curves = m.Item2;
+            var m = d.createMesh(pointarray, colors, rect, distance);
+            d.Mesh = m.Item1;
+            d.Curves = m.Item2;
+
+            return d;
         }
 
         /// <summary>
@@ -142,8 +151,8 @@ namespace gosand
             if (distance > 0.0)
             {
                 Point3d p1 = new Point3d(0, 0, 0);
-                Point3d p2 = new Point3d(0, 0, 255 * scale.Z);
-                curves = Mesh.CreateContourCurves(mesh, p1, p2, distance);
+                Point3d p2 = new Point3d(0, 0, 255 * this.Scale.Z);
+                curves = Rhino.Geometry.Mesh.CreateContourCurves(mesh, p1, p2, distance);
             }
 
             return new Tuple<GH_Mesh, Curve[]>(new GH_Mesh(mesh), curves);

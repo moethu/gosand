@@ -59,7 +59,7 @@ namespace gosand
         /// </summary>
         /// <param name="uri">Gosand server url</param>
         /// <returns>Response in bytes</returns>
-        public GetBytes(string uri)
+        public void GetBytes(string uri)
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
             request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
@@ -69,12 +69,11 @@ namespace gosand
             {
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
-                    buffer = reader.ReadToEnd();
+                    this.buffer = reader.ReadToEnd();
                 }
                 else
                 {
                     ShowComponentError("Could not connect to Server");
-                    return null;
                 }
             }
         }
@@ -109,12 +108,10 @@ namespace gosand
         /// </summary>
         private string buffer;
 
-        private Point3d scale;
-
         /// <summary>
-        /// Circle buffer for websocket data
+        /// Scale
         /// </summary>
-        private List<GH_Circle> circles;
+        private Point3d scale;
 
         /// <summary>
         /// Triggered when solving the instance
@@ -149,7 +146,7 @@ namespace gosand
                 DA.GetData<GH_Number>(4, ref yscale);
                 GH_Number dscale = new GH_Number(1.0);
                 DA.GetData<GH_Number>(5, ref dscale);
-                scale = new Point3d(xscale, yscale, dscale);
+                this.scale = new Point3d(xscale.Value, yscale.Value, dscale.Value);
                 GH_Rectangle crect = new GH_Rectangle();
                 if (!DA.GetData<GH_Rectangle>(6, ref crect)) { crect = null; }
                 GH_Number distance = new GH_Number(0.0);
@@ -188,27 +185,29 @@ namespace gosand
             ScheduleSolve();
         }
 
-        private GosandData generateMesh(string path, List<GH_Colour> palette, GH_Rectangle crect, int frequency, double distance, bool circ)
+        private GosandData generateMesh(string url, List<GH_Colour> palette, GH_Rectangle crect, int frequency, double distance, bool circ)
         {
             //
             // Connect to Gosand sever either using a websocket or by simple GET requests
             //
-            if (!path.ToLower().StartsWith("ws"))
+            string path = circ ? "depthandcircles" : "depth";
+
+            if (!url.ToLower().StartsWith("ws"))
             {
-                GetBytes(String.Format("{0}/data/", path));
-                if (buffer != null)
+                GetBytes(String.Format("{0}/data/{1}/", url, path));
+                if (this.buffer != null)
                 {
-                    return GosandData.FromResponseString(buffer);
+                    return GosandData.FromResponseString(this.buffer, palette, this.scale, crect, distance);
                 }
             }
             else
             {
-                buffer = null;
+                this.buffer = null;
                 if (websocket == null || websocket.State == WebSocketState.Closed)
                 {
                     int server_refresh_rate = frequency < 50 ? 50 : frequency;
-                    string c = circ? "depthandcircles" : "depth";
-                    websocket = new WebSocket(String.Format("{0}/stream/{2}/{1}/", path, server_refresh_rate, c));
+                    
+                    websocket = new WebSocket(String.Format("{0}/stream/{2}/{1}/", url, server_refresh_rate, path));
                     websocket.EnableAutoSendPing = true;
                     websocket.MessageReceived += Websocket_MessageReceived;
                     websocket.Open();
@@ -216,9 +215,9 @@ namespace gosand
                 }
                 while (websocket.State == WebSocketState.Open)
                 {
-                    if (buffer != null)
+                    if (this.buffer != null)
                     {
-                        return GosandData.FromResponseString(buffer);
+                        return GosandData.FromResponseString(this.buffer,palette, this.scale, crect, distance);
                     }
                 }
             }
