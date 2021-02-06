@@ -20,7 +20,7 @@
         init();
         animate();
 
-        var ws = new WebSocket("ws://{{.}}/stream/depthwithcircles/400/");
+        var ws = new WebSocket("ws://{{.}}/stream/400/");
         ws.onopen = function (evt) {
             console.log("Connected to Server");
         }

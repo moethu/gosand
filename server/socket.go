@@ -132,9 +132,9 @@ func ServeWebsocket(c *gin.Context) {
 
 	client := &Client{conn: conn, write: cWrite, read: cRead, closed: false}
 
-	circleDetection := true
-	if c.Params.ByName("type") == "depth" {
-		circleDetection = false
+	circleDetection := false
+	if c.Request.URL.Query().Get("detection") != "" {
+		circleDetection = true
 	}
 
 	if freenect_device_present {

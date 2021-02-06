@@ -69,7 +69,7 @@ namespace gosand
 
             if (trigger.Value)
             {
-                var httpWebRequest = (HttpWebRequest)WebRequest.Create(path.Value + "/circledetectionconfig/");
+                var httpWebRequest = (HttpWebRequest)WebRequest.Create(path.Value + "/config/");
                 httpWebRequest.ContentType = "application/json";
                 httpWebRequest.Method = "POST";
 

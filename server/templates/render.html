@@ -116,7 +116,7 @@
 
         function getDepthArray() {
             var xmlHttp = new XMLHttpRequest();
-            xmlHttp.open("GET", "./data/depthandcircles", false); // false for synchronous request
+            xmlHttp.open("GET", "./data", false); // false for synchronous request
             xmlHttp.send(null);
 
             return base64ToPointArray(JSON.parse(xmlHttp.responseText));

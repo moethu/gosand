@@ -190,11 +190,11 @@ namespace gosand
             //
             // Connect to Gosand sever either using a websocket or by simple GET requests
             //
-            string path = circ ? "depthandcircles" : "depth";
+            string path = circ ? "?detection=true" : "";
 
             if (!url.ToLower().StartsWith("ws"))
             {
-                GetBytes(String.Format("{0}/data/{1}/", url, path));
+                GetBytes(String.Format("{0}/data/{1}", url, path));
                 if (this.buffer != null)
                 {
                     return GosandData.FromResponseString(this.buffer, palette, this.scale, crect, distance);
@@ -207,7 +207,7 @@ namespace gosand
                 {
                     int server_refresh_rate = frequency < 50 ? 50 : frequency;
                     
-                    websocket = new WebSocket(String.Format("{0}/stream/{2}/{1}/", url, server_refresh_rate, path));
+                    websocket = new WebSocket(String.Format("{0}/stream/{1}/{2}", url, server_refresh_rate, path));
                     websocket.EnableAutoSendPing = true;
                     websocket.MessageReceived += Websocket_MessageReceived;
                     websocket.Open();

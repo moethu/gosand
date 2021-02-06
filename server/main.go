@@ -62,10 +62,10 @@ func main() {
 	}
 
 	router.Static("/static/", "./static/")
-	router.GET("/data/:type/", GetArray)
-	router.POST("/circledetectionconfig/", PostCircles)
+	router.GET("/data/", GetArray)
+	router.POST("/config/", PostCircles)
 	router.GET("/frame/:type/", GetFrame)
-	router.Any("/stream/:type/:time/", ServeWebsocket)
+	router.Any("/stream/:time/", ServeWebsocket)
 	router.GET("/", home)
 	router.GET("/socket", socket)
 
@@ -153,12 +153,12 @@ func GetFrame(c *gin.Context) {
 // @Success 200 {array} byte
 // @Router /deptharray/ [get]
 func GetArray(c *gin.Context) {
-	mode := c.Params.ByName("type")
+	cdetection := c.Request.URL.Query().Get("detection")
 	freenect_device.SetLed(freenect.LED_GREEN)
 	depth_array := freenect_device.DepthArray(true)
 
 	var cs []circle
-	if mode == "depthandcircles" {
+	if cdetection != "" {
 		cs = detectCircles(circleDetectionConfig)
 		for i, circle := range cs {
 			depth := depth_array[int(circle.X*480+circle.Y)]
